@@ -14,6 +14,7 @@
 2. **실시간 얼굴 인식 (웹캠 기반)**
    - 웹캠을 통해 실시간으로 얼굴을 감지하고, 주기적으로 백엔드에 전송하여 인식 결과를 화면에 표시합니다.
 
+
 ---
 
 ## 📁 디렉토리 구조
@@ -24,22 +25,40 @@ project-root/
 │   └── app.py              # Streamlit 프론트엔드
 ├── backend/
 │   └── main.py             # FastAPI 백엔드
-├── requirements.txt        # 전체 의존성 리스트
-└── image.png               # 예시로 사용할 업로드 이미지
+├── requirements.txt        # 프로젝트 의존성 목록
+├── image.png               # 예시 업로드 이미지
+└── real2/                  # Python 가상환경 (실행용, Windows 환경)
 ```
 
+---
 
-## 🚀 실행 방법
+## 🚀 실행 방법 (Windows 기준)
 
-### 1. 프론트엔드 실행 (Streamlit)
+### 1. 가상환경 진입
+
+```bash
+call real2\Scripts\activate
+```
+
+### 2. 라이브러리 설치
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 프론트엔드 실행 (Streamlit)
 
 ```bash
 streamlit run frontend/app.py
 ```
-### 2. 백엔드 실행 (FastAPI)
+
+### 4. 백엔드 실행 (FastAPI)
+
 ```bash
 uvicorn backend.main:app --reload
 ```
+
+---
 ## ⚠️ 로컬 HTTP 환경에서 웹캠 사용 시 문제 해결
 
 Chrome은 보안 정책상, **HTTP 환경에서는 웹캠 접근이 차단**됩니다.
