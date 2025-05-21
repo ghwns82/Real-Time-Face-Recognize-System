@@ -32,56 +32,65 @@ if image_file is not None:
 
         if response.status_code == 200:
             result = response.json()
-            name = result.get("name", "Unknown")
-            st.success(f"✅ 인식된 이름: {name}")
+            predictions = result.get("predictions", {})
+
+            if predictions:
+                st.success("✅ 모델별 인식 결과")
+                for model, label in predictions.items():
+                    st.write(f"🔍 **{model}** → {label}")
+                # 또는 보기 좋게 표로 출력
+                # st.table(predictions)
+            else:
+                st.warning("⚠️ 예측 결과가 비어 있습니다.")
         else:
             st.error("❌ 얼굴 인식 실패")
+
 
 # ==========================
 # 2️⃣ 실시간 웹캠 얼굴 인식
 # ==========================
+if st.toggle("📹 실시간 웹캠 얼굴 인식 켜기"):
+    st.header("📹 실시간 웹캠 얼굴 인식")
 
-st.header("📹 실시간 웹캠 얼굴 인식")
+    class VideoProcessor(VideoProcessorBase):
+        def __init__(self):
+            self.frame_count = 0
+            self.result_name = "..."
+            self.request_interval = 30
+            self.lock = threading.Lock()
 
-class VideoProcessor(VideoProcessorBase):
-    def __init__(self):
-        self.frame_count = 0
-        self.result_name = "..."
-        self.request_interval = 30
-        self.lock = threading.Lock()
-
-    def send_frame_to_backend(self, img):
-        try:
-            _, img_encoded = cv2.imencode('.jpg', img)
-            response = requests.post(
-                RECOGNITION_API,
-                files={"file": ("frame.jpg", img_encoded.tobytes(), "image/jpeg")},
-                timeout=1
-            )
-            if response.status_code == 200:
-                name = response.json().get("name", "Unknown")
-            else:
+        def send_frame_to_backend(self, img):
+            try:
+                _, img_encoded = cv2.imencode('.jpg', img)
+                response = requests.post(
+                    RECOGNITION_API,
+                    files={"file": ("frame.jpg", img_encoded.tobytes(), "image/jpeg")},
+                    timeout=1
+                )
+                if response.status_code == 200:
+                    name = response.json().get("name", "Unknown")
+                else:
+                    name = "Error"
+            except:
                 name = "Error"
-        except:
-            name = "Error"
 
-        with self.lock:
-            self.result_name = name
+            with self.lock:
+                self.result_name = name
 
-    def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        self.frame_count += 1
+        def recv(self, frame):
+            img = frame.to_ndarray(format="bgr24")
+            self.frame_count += 1
 
-        # N프레임마다 백엔드로 전송 (비동기 처리)
-        if self.frame_count % self.request_interval == 0:
-            threading.Thread(target=self.send_frame_to_backend, args=(img.copy(),)).start()
+            # N프레임마다 백엔드로 전송 (비동기 처리)
+            if self.frame_count % self.request_interval == 0:
+                threading.Thread(target=self.send_frame_to_backend, args=(img.copy(),)).start()
 
-        # 인식된 이름 오버레이
-        with self.lock:
-            name_to_display = self.result_name
+            # 인식된 이름 오버레이
+            with self.lock:
+                name_to_display = self.result_name
 
-        cv2.putText(img, name_to_display, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
-        return frame.from_ndarray(img, format="bgr24")
+            cv2.putText(img, name_to_display, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+            return frame.from_ndarray(img, format="bgr24")
 
-# 웹캠 실행
-webrtc_streamer(key="face-recognition", video_processor_factory=VideoProcessor)
+    # 웹캠 실행
+    webrtc_streamer(key="face-recognition", video_processor_factory=VideoProcessor)

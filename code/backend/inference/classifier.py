@@ -1,27 +1,39 @@
-# classifier.py
-
 import torch
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import (
+    resnet18, ResNet18_Weights,
+    vit_b_16, ViT_B_16_Weights,
+    vit_l_16, ViT_L_16_Weights,
+    swin_t, Swin_T_Weights,
+    convnext_tiny, ConvNeXt_Tiny_Weights,
+)
 from PIL import Image
 
-# 1. 모델 및 가중치 불러오기 (새로운 방식)
-weights = ResNet18_Weights.DEFAULT
-model = resnet18(weights=weights)
-model.eval()
+# 🧠 사용할 모델 목록 정의
+MODEL_CONFIGS = {
+    "ResNet18": (resnet18, ResNet18_Weights.DEFAULT),
+    "ViT-B/16": (vit_b_16, ViT_B_16_Weights.DEFAULT),
+    "ViT-L/16": (vit_l_16, ViT_L_16_Weights.DEFAULT),
+    "Swin-T": (swin_t, Swin_T_Weights.DEFAULT),
+    "ConvNeXt-Tiny": (convnext_tiny, ConvNeXt_Tiny_Weights.DEFAULT),
+}
 
-# 2. 전처리 정의 (가중치 기준 권장 transform 사용)
-transform = weights.transforms()
-
-# 3. 클래스 라벨 목록
-imagenet_labels = weights.meta["categories"]
-
-# 4. 예측 함수
-def predict(image: Image.Image) -> str:
+# 🔍 여러 모델로 예측 수행 함수
+def predict_all(image: Image.Image) -> dict:
+    results = {}
     img = image.convert("RGB")
-    tensor = transform(img).unsqueeze(0)
 
-    with torch.no_grad():
-        outputs = model(tensor)
-        _, predicted = torch.max(outputs, 1)
+    for name, (model_fn, weights) in MODEL_CONFIGS.items():
+        model = model_fn(weights=weights)
+        model.eval()
 
-    return imagenet_labels[predicted.item()]
+        transform = weights.transforms()
+        tensor = transform(img).unsqueeze(0)
+
+        with torch.no_grad():
+            outputs = model(tensor)
+            _, predicted = torch.max(outputs, 1)
+
+        label = weights.meta["categories"][predicted.item()]
+        results[name] = label
+
+    return results

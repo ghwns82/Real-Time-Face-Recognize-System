@@ -1,38 +1,52 @@
 import torch
-import torchvision.transforms as transforms
 from torchvision import models
+from torchvision.models import (
+    vit_b_16, ViT_B_16_Weights,
+    vit_l_16, ViT_L_16_Weights,
+    swin_t, Swin_T_Weights,
+    convnext_tiny, ConvNeXt_Tiny_Weights,
+)
 from PIL import Image
 import requests
 from io import BytesIO
 
-# 1. 사전 학습된 ResNet-18 모델 불러오기
-model = models.resnet18(pretrained=True)
-model.eval()
+# 🔧 비교할 모델들 (모두 동일한 흐름 적용)
+MODEL_CONFIGS = {
+    "ViT-B/16": (vit_b_16, ViT_B_16_Weights.DEFAULT),
+    "ViT-L/16": (vit_l_16, ViT_L_16_Weights.DEFAULT),
+    "Swin-T": (swin_t, Swin_T_Weights.DEFAULT),
+    "ConvNeXt-Tiny": (convnext_tiny, ConvNeXt_Tiny_Weights.DEFAULT),
+}
 
-# 2. 이미지 로드 (인터넷에서 아무 이미지 사용)
-url = "https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg"
-response = requests.get(url)
-img = Image.open(BytesIO(response.content)).convert("RGB")
+# 🖼️ 이미지 로드
+def load_image_from_url(url: str) -> Image.Image:
+    response = requests.get(url)
+    image = Image.open(BytesIO(response.content)).convert("RGB")
+    return image
 
-# 3. 이미지 전처리
-transform = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),  # [0, 1]
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],  # ImageNet 기준
-                         std=[0.229, 0.224, 0.225])
-])
+# 🚀 예측 수행
+def predict(model_fn, weights, image: Image.Image) -> str:
+    model = model_fn(weights=weights)
+    model.eval()
 
-input_tensor = transform(img).unsqueeze(0)  # 배치 차원 추가
+    transform = weights.transforms()
+    input_tensor = transform(image).unsqueeze(0)
 
-# 4. 예측 수행
-with torch.no_grad():
-    outputs = model(input_tensor)
-    _, predicted = torch.max(outputs, 1)
+    with torch.no_grad():
+        outputs = model(input_tensor)
+        pred_idx = outputs.argmax(1).item()
 
-# 5. 클래스 이름 로드
-LABELS_URL = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
-labels = requests.get(LABELS_URL).text.strip().split("\n")
+    labels = weights.meta["categories"]
+    return labels[pred_idx]
 
-# 6. 결과 출력
-print(f"예측된 클래스: {labels[predicted.item()]}")
+# 🧪 전체 모델에 대해 예측 실행
+if __name__ == "__main__":
+    # 1. 이미지 로드
+    image_url = "https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg"
+    image = load_image_from_url(image_url)
+
+    # 2. 모델별 예측 수행 및 결과 출력
+    print("🧠 모델별 예측 결과:\n")
+    for name, (model_fn, weights) in MODEL_CONFIGS.items():
+        label = predict(model_fn, weights, image)
+        print(f"[{name}] → {label}")

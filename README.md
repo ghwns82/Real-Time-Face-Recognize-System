@@ -15,7 +15,7 @@
 
 ## ✅ 현재 구현된 기능
 
-- [x] 업로드된 이미지 분류 (ResNet18)
+- [x] 업로드된 이미지 분류 (ResNet18, ViT, Swin-T, ConvNeXt-Tiny)
 - [x] FastAPI `/predict` 엔드포인트 구현
 - [x] `requirements.txt` 및 `.gitignore` 정리
 - [x] 디렉토리 구조 개선 (`code/` 중심)
