@@ -19,10 +19,11 @@
 - [x] FastAPI `/predict` 엔드포인트 구현
 - [x] `requirements.txt` 및 `.gitignore` 정리
 - [x] 디렉토리 구조 개선 (`code/` 중심)
+- [x] 실시간 웹캠 기반 분류
 
 
 ## 🔜 향후 계획
 - [ ] 얼굴 인식 모델 적용 (e.g. face_recognition, dlib)
-- [ ] 실시간 웹캠 기반 얼굴 인식 기능
+- [ ] 실시간 웹캠 기반 얼굴 인식 경량화
 - [ ] 여러 모델 테스트 및 비교 (기본 모델 / 특화 모델 / 연구실 모델)
 - [ ] https 적용

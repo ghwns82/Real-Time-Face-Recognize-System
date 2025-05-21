@@ -8,8 +8,8 @@ import numpy as np
 import io
 
 # FastAPI 주소 설정
-RECOGNITION_API = "http://localhost:8000/predict/"
-UPLOAD_API = "http://localhost:8000/upload-image/"  # 이미지 업로드 백엔드 API
+RECOGNITION_API = "http://localhost:8000/predict"
+UPLOAD_API = "http://localhost:8000/upload-image"  # 이미지 업로드 백엔드 API
 
 st.title("🧠 얼굴 인식 시스템")
 st.markdown("카메라 실시간 인식 또는 이미지 업로드 중 선택하세요.")
@@ -45,17 +45,13 @@ if image_file is not None:
         else:
             st.error("❌ 얼굴 인식 실패")
 
-
-# ==========================
-# 2️⃣ 실시간 웹캠 얼굴 인식
-# ==========================
 if st.toggle("📹 실시간 웹캠 얼굴 인식 켜기"):
     st.header("📹 실시간 웹캠 얼굴 인식")
 
     class VideoProcessor(VideoProcessorBase):
         def __init__(self):
             self.frame_count = 0
-            self.result_name = "..."
+            self.result_label = "..."
             self.request_interval = 30
             self.lock = threading.Lock()
 
@@ -65,32 +61,32 @@ if st.toggle("📹 실시간 웹캠 얼굴 인식 켜기"):
                 response = requests.post(
                     RECOGNITION_API,
                     files={"file": ("frame.jpg", img_encoded.tobytes(), "image/jpeg")},
-                    timeout=1
+                    timeout=10  # ✅ 더 넉넉하게
                 )
                 if response.status_code == 200:
-                    name = response.json().get("name", "Unknown")
+                    result = response.json()
+                    predictions = result.get("predictions", {})
+                    label = predictions.get("ResNet18", "Unknown")  # ✅ 대표 모델만 선택
                 else:
-                    name = "Error"
-            except:
-                name = "Error"
+                    label = "Error"
+            except Exception as e:
+                print("🔥 예외 발생:", e)  # ✅ 콘솔에 에러 메시지 출력
+                label = "Error"
 
             with self.lock:
-                self.result_name = name
+                self.result_label = label
 
         def recv(self, frame):
             img = frame.to_ndarray(format="bgr24")
             self.frame_count += 1
 
-            # N프레임마다 백엔드로 전송 (비동기 처리)
             if self.frame_count % self.request_interval == 0:
                 threading.Thread(target=self.send_frame_to_backend, args=(img.copy(),)).start()
 
-            # 인식된 이름 오버레이
             with self.lock:
-                name_to_display = self.result_name
+                label_to_display = self.result_label
 
-            cv2.putText(img, name_to_display, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+            cv2.putText(img, label_to_display, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
             return frame.from_ndarray(img, format="bgr24")
 
-    # 웹캠 실행
     webrtc_streamer(key="face-recognition", video_processor_factory=VideoProcessor)
