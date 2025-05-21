@@ -8,7 +8,7 @@ import numpy as np
 import io
 
 # FastAPI 주소 설정
-RECOGNITION_API = "http://localhost:8000/recognize-face/"
+RECOGNITION_API = "http://localhost:8000/predict/"
 UPLOAD_API = "http://localhost:8000/upload-image/"  # 이미지 업로드 백엔드 API
 
 st.title("🧠 얼굴 인식 시스템")
