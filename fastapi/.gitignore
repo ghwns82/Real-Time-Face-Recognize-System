@@ -1,0 +1,4 @@
+__pycache__/
+.env
+buffalo_l/
+nohup.out

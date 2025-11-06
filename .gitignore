@@ -1,0 +1,8 @@
+*.env
+*.out
+*.db
+
+**/__pycache__/
+**/model/
+streamlit/.git/
+fastapi/.git/
