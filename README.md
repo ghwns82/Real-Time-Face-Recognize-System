@@ -10,10 +10,10 @@
 
 | 구성 요소                    | 기술 스택                | 배포 위치     | 역할                    |
 | ------------------------ | -------------------- | --------- | --------------------- |
-| **Frontend (Streamlit)** | Python, Streamlit    | **배포 환경** | 실시간 영상 입력 및 결과 시각화    |
+| **Frontend (Streamlit)** | Python, Streamlit    | **배포(?)** | 실시간 영상 입력 및 결과 시각화    |
 | **Backend (FastAPI)**    | Python, FastAPI      | **로컬 서버** | 얼굴 임베딩 추출 및 출석 로직 처리  |
 | **출석 DB**                | SQLite               | **로컬**    | 출석 내역 저장 및 조회         |
-| **얼굴 DB**                | Pinecone (Vector DB) | **배포 환경** | 얼굴 임베딩 벡터 저장 및 유사도 검색 |
+| **얼굴 DB**                | Pinecone (Vector DB) | **배포(AWS)** | 얼굴 임베딩 벡터 저장 및 유사도 검색 |
 
 ---
 
@@ -65,6 +65,11 @@ nohup uvicorn main:app [필요한 옵션] &
 5. Streamlit 화면에 결과(이름) 표시
 
 ---
+## 🚫 에러들
+
+1. 여러명에 대한 predict 불가능
+2. 기기에 따라 카메라 관련 에러
+3. Unknown에 대한 threshhold 값 조정 필요
 
 
 ## 🧩 추가 개발 예정
